@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navbar } from "@/components/navbar";
 import {
   Table,
@@ -23,45 +23,21 @@ import {
 } from "@/components/ui/dialog";
 import { Pencil, Trash2 } from "lucide-react";
 
-// Dados dos jogadores para administração
-const playersData = [
-  {
-    id: 1,
-    nome: "João Silva",
-    quantidadePartidas: 15,
-    quantidadeVitorias: 12,
-  },
-  {
-    id: 2,
-    nome: "Maria Santos",
-    quantidadePartidas: 12,
-    quantidadeVitorias: 9,
-  },
-  {
-    id: 3,
-    nome: "Pedro Costa",
-    quantidadePartidas: 18,
-    quantidadeVitorias: 11,
-  },
-  {
-    id: 4,
-    nome: "Ana Oliveira",
-    quantidadePartidas: 10,
-    quantidadeVitorias: 6,
-  },
-  {
-    id: 5,
-    nome: "Carlos Ferreira",
-    quantidadePartidas: 14,
-    quantidadeVitorias: 7,
-  },
-];
+interface Player {
+  id: number;
+  nome: string;
+  quantidadePartidas: number;
+  quantidadeVitorias: number;
+}
 
 export default function AdminPage() {
+  const [playersData, setPlayersData] = useState<Player[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [playerName, setPlayerName] = useState("");
   const [isGameDialogOpen, setIsGameDialogOpen] = useState(false);
-  const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
+  const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(
+    null
+  );
   const [playedToday, setPlayedToday] = useState(true);
   const [playerWon, setPlayerWon] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -70,13 +46,23 @@ export default function AdminPage() {
     name: string;
   } | null>(null);
 
+  const fetchPlayers = () => {
+    fetch("/api/players")
+      .then((res) => res.json())
+      .then((data) => setPlayersData(data));
+  };
+
+  useEffect(() => {
+    fetchPlayers();
+  }, []);
+
   const handleEdit = (playerId: number) => {
-    // Função para editar jogador
+    // A lógica de edição pode ser implementada aqui, talvez abrindo um dialog
+    // similar ao de adicionar jogador, mas preenchido com os dados do jogador.
     console.log(`Editar jogador com ID: ${playerId}`);
   };
 
   const handleDelete = (playerId: number) => {
-    // Função para abrir dialog de confirmação de exclusão
     const player = playersData.find((p) => p.id === playerId);
     if (player) {
       setPlayerToDelete({ id: playerId, name: player.nome });
@@ -84,39 +70,46 @@ export default function AdminPage() {
     }
   };
 
-  const handleConfirmDelete = () => {
-    // Função para confirmar exclusão
+  const handleConfirmDelete = async () => {
     if (playerToDelete) {
-      console.log(
-        `Excluir jogador com ID: ${playerToDelete.id} - ${playerToDelete.name}`
-      );
+        await fetch('/api/players', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: playerToDelete.id }),
+        });
+      fetchPlayers(); // Atualiza a lista
       setIsDeleteDialogOpen(false);
       setPlayerToDelete(null);
     }
   };
 
   const handleTodayGame = (playerId: number) => {
-    // Função para marcar jogo de hoje
     setSelectedPlayerId(playerId);
     setPlayedToday(true);
     setPlayerWon(false);
     setIsGameDialogOpen(true);
   };
 
-  const handleAddPlayer = () => {
-    // Função para adicionar jogador
+  const handleAddPlayer = async () => {
     if (playerName.trim()) {
-      console.log(`Adicionar jogador: ${playerName}`);
+      await fetch('/api/players', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome: playerName }),
+      });
       setPlayerName("");
+      fetchPlayers(); // Atualiza a lista
       setIsDialogOpen(false);
     }
   };
 
-  const handleConfirmGame = () => {
-    // Função para confirmar jogo
-    console.log(
-      `Jogador ID: ${selectedPlayerId}, Jogou hoje: ${playedToday}, Ganhou: ${playerWon}`
-    );
+  const handleConfirmGame = async () => {
+    await fetch('/api/players', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: selectedPlayerId, playedToday, playerWon }),
+    });
+    fetchPlayers(); // Atualiza a lista
     setIsGameDialogOpen(false);
     setSelectedPlayerId(null);
   };

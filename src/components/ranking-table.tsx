@@ -1,3 +1,4 @@
+"use client";
 import {
   Table,
   TableBody,
@@ -7,58 +8,39 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { useEffect, useState } from "react";
 
-// Dados de exemplo para a tabela
-const rankingData = [
-  {
-    rank: 1,
-    nome: "João Silva",
-    ultimaPartida: "2024-08-24",
-    ultimaVitoria: "2024-08-24",
-    quantidadePartidas: 15,
-    quantidadeVitorias: 12,
-  },
-  {
-    rank: 2,
-    nome: "Maria Santos",
-    ultimaPartida: "2024-08-23",
-    ultimaVitoria: "2024-08-22",
-    quantidadePartidas: 12,
-    quantidadeVitorias: 9,
-  },
-  {
-    rank: 3,
-    nome: "Pedro Costa",
-    ultimaPartida: "2024-08-23",
-    ultimaVitoria: "2024-08-23",
-    quantidadePartidas: 18,
-    quantidadeVitorias: 11,
-  },
-  {
-    rank: 4,
-    nome: "Ana Oliveira",
-    ultimaPartida: "2024-08-22",
-    ultimaVitoria: "2024-08-21",
-    quantidadePartidas: 10,
-    quantidadeVitorias: 6,
-  },
-  {
-    rank: 5,
-    nome: "Carlos Ferreira",
-    ultimaPartida: "2024-08-22",
-    ultimaVitoria: "2024-08-20",
-    quantidadePartidas: 14,
-    quantidadeVitorias: 7,
-  },
-];
+interface Player {
+  rank: number;
+  nome: string;
+  ultimaPartida: string;
+  ultimaVitoria: string;
+  quantidadePartidas: number;
+  quantidadeVitorias: number;
+}
 
 export function RankingTable() {
+  const [rankingData, setRankingData] = useState<Player[]>([]);
+
+  useEffect(() => {
+    fetch("/api/players")
+      .then((res) => res.json())
+      .then((data) => {
+        const rankedData = data.map((player: any, index: number) => ({
+          ...player,
+          rank: index + 1,
+        }));
+        setRankingData(rankedData);
+      });
+  }, []);
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("pt-BR");
+    return date.toLocaleDateString("pt-BR", { timeZone: 'UTC' });
   };
 
   const getWinRate = (vitorias: number, partidas: number) => {
+    if (partidas === 0) return "0.0";
     const rate = (vitorias / partidas) * 100;
     return rate.toFixed(1);
   };

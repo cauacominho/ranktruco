@@ -1,3 +1,4 @@
+"use client";
 import {
   Table,
   TableBody,
@@ -7,42 +8,30 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { useEffect, useState } from "react";
 
-// Dados de exemplo para a tabela simples
-const simpleRankingData = [
-  {
-    posicao: 1,
-    nome: "João Silva",
-    quantidadePartidas: 15,
-    quantidadeVitorias: 12,
-  },
-  {
-    posicao: 2,
-    nome: "Maria Santos",
-    quantidadePartidas: 12,
-    quantidadeVitorias: 9,
-  },
-  {
-    posicao: 3,
-    nome: "Pedro Costa",
-    quantidadePartidas: 18,
-    quantidadeVitorias: 11,
-  },
-  {
-    posicao: 4,
-    nome: "Ana Oliveira",
-    quantidadePartidas: 10,
-    quantidadeVitorias: 6,
-  },
-  {
-    posicao: 5,
-    nome: "Carlos Ferreira",
-    quantidadePartidas: 14,
-    quantidadeVitorias: 7,
-  },
-];
+interface SimplePlayer {
+  posicao: number;
+  nome: string;
+  quantidadePartidas: number;
+  quantidadeVitorias: number;
+}
 
 export function SimpleRankingTable() {
+  const [simpleRankingData, setSimpleRankingData] = useState<SimplePlayer[]>([]);
+
+  useEffect(() => {
+    fetch("/api/players")
+      .then((res) => res.json())
+      .then((data) => {
+        const rankedData = data.map((player: any, index: number) => ({
+          ...player,
+          posicao: index + 1,
+        }));
+        setSimpleRankingData(rankedData);
+      });
+  }, []);
+
   const getRankBadgeVariant = (posicao: number) => {
     if (posicao === 1) return "default";
     if (posicao <= 3) return "secondary";
